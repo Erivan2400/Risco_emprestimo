@@ -1,3 +1,5 @@
+from sklearn.svm import SVC
+from sklearn.preprocessing import StandardScaler
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -9,26 +11,27 @@ def get_data():
 
 
 # função para treinar o modelo
-def train_model():
-    data = get_data()
-    data = data.drop(columns='id_cliente')
-    
-    #Separando os Dados de Treino e de Teste
+data = get_data()
+data = data.drop(columns='id_cliente')
 
-    X = data.iloc[:,:-1].values
-    y = data.iloc[:,-1].values
+#Separando os Dados de Treino e de Teste
 
-    #Treinamento da Máquina Preditiva
-    from sklearn.svm import SVC
-    Maquina_preditiva = SVC(kernel='linear', gamma=1e-5, C=10, random_state=7)
-    Maquina_preditiva.fit(X, y)
-    return Maquina_preditiva
+X = data.iloc[:, :-1].values
+y = data.iloc[:, -1].values
+
+#Redimensionando os Dados - Padronização com o StandardScaler
+sc = StandardScaler()
+X = sc.fit_transform(X)
+
+#Treinamento da Máquina Preditiva
+Maquina_preditiva = SVC(kernel='linear', gamma=1e-5, C=10, random_state=7)
+Maquina_preditiva.fit(X, y)
 
 # criando um dataframe
 data = get_data()
 
 # treinando o modelo
-model = train_model()
+model = Maquina_preditiva
 
 # título
 st.title("Sistema de Previsão de Risco do Cliente para Concessão de Empréstimos- By Erivan Oliveira")
@@ -49,7 +52,7 @@ btn_predict = st.sidebar.button("Realizar Predição do Risco")
 
 # verifica se o botão foi acionado
 if btn_predict:
-    result = model.predict([[indice_inad,anot_cadastrais,class_renda,saldo_contas]])
+    result = model.predict(sc.transform([[indice_inad,anot_cadastrais,class_renda,saldo_contas]]))
     st.subheader("O Risco Previsto do Cliente é:")
     result = result[0]
     st.write(result)
